@@ -9,7 +9,11 @@ defmodule Finpes.Accounts.User do
     field :email, :string
     field :password_hash, :string
     field :avatar_url, :string
+    field :plan_role, :string, default: "free"
+    field :payment_gateway_id, :string
     field :password, :string, virtual: true
+
+
 
     timestamps(type: :utc_datetime)
   end

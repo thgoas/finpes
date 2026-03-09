@@ -10,10 +10,17 @@ defmodule FinpesWeb.Router do
     plug FinpesWeb.Plugs.Finpes
   end
 
+  pipeline :api_pro_only do
+    plug FinpesWeb.Plugs.Finpes
+    plug FinpesWeb.Plugs.RequirePlan, ["pro", "premium"]
+  end
+
   scope "/api", FinpesWeb do
     pipe_through :api
 
     post "/login", SessionController, :create
+
+    post "/register", UserController, :create
   end
 
   scope "/api", FinpesWeb do
@@ -21,8 +28,15 @@ defmodule FinpesWeb.Router do
 
     post "/logout", SessionController, :delete
     get "/me", UserController, :me
+
+    resources "/wallets", WalletController, except: [:new, :edit]
   end
 
+  scope "/api/pro", FinpesWeb do
+    pipe_through [:api, :api_pro_only]
+
+    get "/dashboard", UserController, :premium_dashboard
+  end
   # Enable LiveDashboard and Swoosh mailbox preview in development
   if Application.compile_env(:finpes, :dev_routes) do
     # If you want to use the LiveDashboard in production, you should put

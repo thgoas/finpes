@@ -1,5 +1,37 @@
 This is a web application written using the Phoenix web framework.
 
+## Implemented Features: Finpes (SaaS Personal Finance) API
+
+We are building "Finpes", a SaaS API designed for Personal Finance management. It features a robust, hybrid authentication architecture serving both Web (React/Vite) and Mobile (Flutter) clients securely.
+
+* **API-Only Setup:** Built on a Phoenix API-only foundation (`--no-html`, `--no-assets`).
+* **SaaS Data Modeling (Ecto):** * Configured `users` and `user_tokens` tables utilizing `binary_id` (UUIDs).
+  * Added SaaS-specific columns to the `users` table: `plan_role` (defaults to "free") and `payment_gateway_id` (indexed for fast webhook lookups from Stripe/Pagar.me).
+* **Security & Validations:** * Integrated `argon2_elixir` for state-of-the-art password hashing. 
+  * Enforced strict Ecto Changeset validations (regex for strong passwords, unique email constraints, minimum length).
+  * Implemented a custom error formatter (`traverse_errors`) to return clean, localized error messages to the frontend.
+* **Seamless Onboarding (Auto-Login):** The `POST /api/register` endpoint automatically logs the user in upon successful creation, generating the session token immediately without requiring a secondary login request.
+* **Hybrid Token Strategy:** * Utilized `Phoenix.Token` for lightweight, cryptographically signed session tokens.
+  * Tokens are persisted in the database, allowing for instant, server-side revocation.
+* **Custom Authentication Middleware:** Created `FinpesWeb.Plugs.ApiAuth`, a custom Plug that dynamically authenticates requests by extracting credentials from either **Cookies** (Web) or the **Authorization: Bearer** header (Mobile).
+* **CORS & Web Security:** * Configured `corsica` to securely handle cross-origin requests.
+  * Mitigated XSS (Cross-Site Scripting) attacks for Web clients by delivering tokens via `HttpOnly`, `Secure`, and `SameSite=Lax` cookies.
+* **Role-Based Access Control (RBAC) & SaaS Authorization:**
+  * Implemented a custom authorization middleware (`FinpesWeb.Plugs.RequirePlan`) to protect premium routes.
+  * The Plug dynamically checks the authenticated user's `plan_role` (e.g., "pro", "premium") against the allowed plans for a specific route pipeline.
+  * Successfully differentiates between Authentication (`401 Unauthorized` for missing/invalid tokens) and Authorization (`403 Forbidden` for valid users without the required subscription plan).
+  * Built integration tests (`ProAccessTest`) to guarantee that premium endpoints (like `/api/pro/dashboard`) are strictly shielded from "free" tier users, ensuring a secure monetization architecture.
+  * **Phase 1: Financial Core - Wallets:**
+  * Engineered the `Wallet` entity within an isolated `Finance` context to manage user checking accounts, savings, and credit cards, resolving naming collisions with user authentication.
+  * **Zero-Float Policy:** Implemented a strict integer-only database architecture for currency (`initial_balance` is stored in cents) to completely eliminate decimal rounding errors (e.g., the "Lost Cent Problem").
+  * **Strict Tenant Isolation:** Built the Context and Controller logic to enforce that all database queries and mutations require the authenticated `user_id`, guaranteeing cross-tenant data security.
+  * **Resilient Data Transformation:** Ensured seamless key conversion (Atoms to Strings) at the Context layer, allowing the API to gracefully handle internal Elixir map structures and external JSON payloads.
+  * Exposed a fully secure RESTful JSON API (`GET`, `POST`, `PUT`, `DELETE`) under the `/api/wallets` endpoint.
+
+
+
+---
+
 ## Project guidelines
 
 - Use `mix precommit` alias when you are done with all changes and fix any pending issues
@@ -18,10 +50,6 @@ This is a web application written using the Phoenix web framework.
 - If you override the default input classes (`<.input class="myclass px-2 py-1 rounded-lg">)`) class with your own values, no default classes are inherited, so your
 custom classes must fully style the input
 
-
-<!-- usage-rules-start -->
-
-<!-- phoenix:elixir-start -->
 ## Elixir guidelines
 
 - Elixir lists **do not support index based access via the access syntax**
@@ -76,9 +104,6 @@ custom classes must fully style the input
       assert_receive {:DOWN, ^ref, :process, ^pid, :normal}
 
    - Instead of sleeping to synchronize before the next call, **always** use `_ = :sys.get_state/1` to ensure the process has handled prior messages
-<!-- phoenix:elixir-end -->
-
-<!-- phoenix:phoenix-start -->
 ## Phoenix guidelines
 
 - Remember Phoenix router `scope` blocks include an optional alias which is prefixed for all routes within the scope. **Always** be mindful of this when creating routes within a scope to avoid duplicate module prefixes.
@@ -94,9 +119,6 @@ custom classes must fully style the input
   the UserLive route would point to the `AppWeb.Admin.UserLive` module
 
 - `Phoenix.View` no longer is needed or included with Phoenix, don't use it
-<!-- phoenix:phoenix-end -->
-
-<!-- phoenix:ecto-start -->
 ## Ecto Guidelines
 
 - **Always** preload Ecto associations in queries when they'll be accessed in templates, ie a message that needs to reference the `message.user.email`
@@ -106,6 +128,3 @@ custom classes must fully style the input
 - You **must** use `Ecto.Changeset.get_field(changeset, :field)` to access changeset fields
 - Fields which are set programatically, such as `user_id`, must not be listed in `cast` calls or similar for security purposes. Instead they must be explicitly set when creating the struct
 - **Always** invoke `mix ecto.gen.migration migration_name_using_underscores` when generating migration files, so the correct timestamp and conventions are applied
-<!-- phoenix:ecto-end -->
-
-<!-- usage-rules-end -->
