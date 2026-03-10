@@ -111,4 +111,66 @@ defmodule Finpes.FinanceTest do
       end
     end
   end
+
+  describe "categories" do
+    alias Finpes.Finance.Category
+
+    import Finpes.FinanceFixtures
+
+    @invalid_attrs %{name: nil, type: nil, color: nil, classification: nil, icon: nil}
+
+    test "list_categories/0 returns all categories" do
+      category = category_fixture()
+      assert Finance.list_categories() == [category]
+    end
+
+    test "get_category!/1 returns the category with given id" do
+      category = category_fixture()
+      assert Finance.get_category!(category.id) == category
+    end
+
+    test "create_category/1 with valid data creates a category" do
+      valid_attrs = %{name: "some name", type: "some type", color: "some color", classification: "some classification", icon: "some icon"}
+
+      assert {:ok, %Category{} = category} = Finance.create_category(valid_attrs)
+      assert category.name == "some name"
+      assert category.type == "some type"
+      assert category.color == "some color"
+      assert category.classification == "some classification"
+      assert category.icon == "some icon"
+    end
+
+    test "create_category/1 with invalid data returns error changeset" do
+      assert {:error, %Ecto.Changeset{}} = Finance.create_category(@invalid_attrs)
+    end
+
+    test "update_category/2 with valid data updates the category" do
+      category = category_fixture()
+      update_attrs = %{name: "some updated name", type: "some updated type", color: "some updated color", classification: "some updated classification", icon: "some updated icon"}
+
+      assert {:ok, %Category{} = category} = Finance.update_category(category, update_attrs)
+      assert category.name == "some updated name"
+      assert category.type == "some updated type"
+      assert category.color == "some updated color"
+      assert category.classification == "some updated classification"
+      assert category.icon == "some updated icon"
+    end
+
+    test "update_category/2 with invalid data returns error changeset" do
+      category = category_fixture()
+      assert {:error, %Ecto.Changeset{}} = Finance.update_category(category, @invalid_attrs)
+      assert category == Finance.get_category!(category.id)
+    end
+
+    test "delete_category/1 deletes the category" do
+      category = category_fixture()
+      assert {:ok, %Category{}} = Finance.delete_category(category)
+      assert_raise Ecto.NoResultsError, fn -> Finance.get_category!(category.id) end
+    end
+
+    test "change_category/1 returns a category changeset" do
+      category = category_fixture()
+      assert %Ecto.Changeset{} = Finance.change_category(category)
+    end
+  end
 end

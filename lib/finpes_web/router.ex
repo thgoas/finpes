@@ -30,6 +30,7 @@ defmodule FinpesWeb.Router do
     get "/me", UserController, :me
 
     resources "/wallets", WalletController, except: [:new, :edit]
+    resources "/categories", CategoryController, except: [:new, :edit]
   end
 
   scope "/api/pro", FinpesWeb do

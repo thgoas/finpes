@@ -85,4 +85,44 @@ defmodule Finpes.Finance do
   def change_wallet(%Wallet{} = wallet, attrs \\ %{}) do
     Wallet.changeset(wallet, attrs)
   end
+
+  alias Finpes.Finance.Category
+
+  @doc """
+  Retorna TODAS as categorias do usuário logado.
+  """
+  def list_user_categories(user_id) do
+    from(c in Category, where: c.user_id == ^user_id)
+    |> Repo.all()
+  end
+
+  @doc """
+  Busca UMA categoria específica do usuário.
+  """
+  def get_user_category!(user_id, id) do
+    from(c in Category, where: c.id == ^id and c.user_id == ^user_id)
+    |> Repo.one!()
+  end
+
+  @doc """
+  Cria uma categoria atrelada ao usuário (seguro contra chaves mistas).
+  """
+  def create_user_category(user_id, attrs \\ %{}) do
+    normalized_attrs = Map.new(attrs, fn {k, v} -> {to_string(k), v} end)
+    final_attrs = Map.put(normalized_attrs, "user_id", user_id)
+
+    %Category{}
+    |> Category.changeset(final_attrs)
+    |> Repo.insert()
+  end
+
+  def update_category(%Category{} = category, attrs) do
+    category
+    |> Category.changeset(attrs)
+    |> Repo.update()
+  end
+
+  def delete_category(%Category{} = category) do
+    Repo.delete(category)
+  end
 end
