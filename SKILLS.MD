@@ -16,6 +16,9 @@ During the development of this API, the following skills, tools, and architectur
 * **Data Lifecycle (Cast vs. Validate):** Deep understanding of Ecto's validation pipeline, correctly handling early rejection of invalid data types during the `cast/3` phase before reaching custom validations.
 * **Financial Data Modeling:** Applied the "Integer-Cent Pattern" to handle currency, avoiding floating-point precision issues inherent in monetary calculations.
 * **Tenant Isolation:** Enforced strict multi-tenant data boundaries at the Context layer, ensuring queries are strictly scoped to the authenticated `user_id`.
+* **Domain-Driven Validations:** Translated complex business requirements (e.g., the 50/30/20 budgeting methodology) into robust database constraints using Ecto's `validate_inclusion/3` and custom error mappings.
+* **Cross-Entity Validation:** Designed secure Ecto Context pipelines that validate ownership of related entities (e.g., ensuring a Wallet belongs to the current User) before allowing inserts or updates, preventing cross-tenant ID spoofing.
+* **Dynamic Cascade Rules:** Configured distinct Ecto Migration constraint behaviors (`on_delete: :delete_all` vs. `on_delete: :nilify_all`) to match precise real-world business logic requirements for data retention.
 
 ## Security & Cryptography
 * **Argon2:** Implemented state-of-the-art password hashing to protect against brute-force and hardware attacks.
@@ -29,6 +32,7 @@ During the development of this API, the following skills, tools, and architectur
 * **CORS (Cross-Origin Resource Sharing):** Configured allowed origins, methods, and enabled credential transmission (`allow_credentials: true`) via the `corsica` library.
 * **BFF (Backend for Frontend) Pattern:** Designed dynamic endpoints that adapt their authentication delivery method based on the client type (`client_type: "web" | "mobile"`).
 * **Seamless Onboarding Flows:** Designed UX-optimized endpoints (e.g., auto-login upon registration) by securely passing authentication state immediately after resource creation.
+* **API Usability & Localization:** Implemented custom error message translations directly at the Schema validation layer, ensuring the JSON responses are immediately actionable and user-friendly for frontend clients.
 
 ## Automated Testing (ExUnit)
 * **TDD / BDD Concepts:** Wrote test suites using ExUnit's `test` and `setup` macros.
@@ -39,3 +43,6 @@ During the development of this API, the following skills, tools, and architectur
 * **Context vs. Controller Testing:** Successfully isolated business logic (Context tests ensuring database integrity and tenant isolation) from web delivery logic (Controller tests validating JSON responses and HTTP status codes like 422 Unprocessable Entity).
 ## Elixir Fundamentals
 * **Map Normalization:** Handled the "Mixed Keys" pitfall (String vs. Atom keys) by normalizing data structures with `Map.new/2` prior to database insertion, improving interoperability between tests and web controllers.
+## Software Architecture & Design Patterns
+* **Ledger Design:** Applied core principles of Double-Entry Bookkeeping to database schema design, utilizing tracking IDs (`transfer_id`) to maintain mathematical consistency in cross-wallet fund movements.
+* **Edge-Case Modeling:** Solved complex personal finance edge cases (Pass-Through Transactions) natively at the database layer to preserve the integrity of future analytical reporting.

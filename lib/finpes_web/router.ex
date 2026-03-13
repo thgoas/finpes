@@ -31,6 +31,7 @@ defmodule FinpesWeb.Router do
 
     resources "/wallets", WalletController, except: [:new, :edit]
     resources "/categories", CategoryController, except: [:new, :edit]
+    resources "/transactions", TransactionController, except: [:new, :edit]
   end
 
   scope "/api/pro", FinpesWeb do

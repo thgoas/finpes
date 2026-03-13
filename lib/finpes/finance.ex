@@ -125,4 +125,50 @@ defmodule Finpes.Finance do
   def delete_category(%Category{} = category) do
     Repo.delete(category)
   end
+
+  alias Finpes.Finance.Transaction
+
+  @doc """
+  Retorna TODAS as transações do usuário logado.
+  """
+  def list_user_transactions(user_id) do
+    from(t in Transaction, where: t.user_id == ^user_id)
+    |> Repo.all()
+  end
+
+  @doc """
+  Busca UMA transação específica do usuário.
+  """
+  def get_user_transaction!(user_id, id) do
+    from(t in Transaction, where: t.id == ^id and t.user_id == ^user_id)
+    |> Repo.one!()
+  end
+
+  @doc """
+  Cria uma transação, garantindo Tenant Isolation e Posse da Carteira.
+  """
+  def create_user_transaction(user_id, attrs \\ %{}) do
+    normalized_attrs = Map.new(attrs, fn {k, v} -> {to_string(k), v} end)
+    final_attrs = Map.put(normalized_attrs, "user_id", user_id)
+
+    # SEGURANÇA MÁXIMA: Verifica se o wallet_id enviado realmente pertence a este usuário.
+    # Se ele mandar o ID da carteira de outra pessoa, o get_user_wallet! levanta um erro
+    # e corta a requisição na hora, antes mesmo de bater no Changeset.
+    wallet_id = Map.get(final_attrs, "wallet_id")
+    if wallet_id, do: get_user_wallet!(user_id, wallet_id)
+
+    %Transaction{}
+    |> Transaction.changeset(final_attrs)
+    |> Repo.insert()
+  end
+
+  def update_transaction(%Transaction{} = transaction, attrs) do
+    transaction
+    |> Transaction.changeset(attrs)
+    |> Repo.update()
+  end
+
+  def delete_transaction(%Transaction{} = transaction) do
+    Repo.delete(transaction)
+  end
 end

@@ -21,14 +21,25 @@ We are building "Finpes", a SaaS API designed for Personal Finance management. I
   * The Plug dynamically checks the authenticated user's `plan_role` (e.g., "pro", "premium") against the allowed plans for a specific route pipeline.
   * Successfully differentiates between Authentication (`401 Unauthorized` for missing/invalid tokens) and Authorization (`403 Forbidden` for valid users without the required subscription plan).
   * Built integration tests (`ProAccessTest`) to guarantee that premium endpoints (like `/api/pro/dashboard`) are strictly shielded from "free" tier users, ensuring a secure monetization architecture.
-  * **Phase 1: Financial Core - Wallets:**
+* **Phase 1: Financial Core - Wallets:**
   * Engineered the `Wallet` entity within an isolated `Finance` context to manage user checking accounts, savings, and credit cards, resolving naming collisions with user authentication.
   * **Zero-Float Policy:** Implemented a strict integer-only database architecture for currency (`initial_balance` is stored in cents) to completely eliminate decimal rounding errors (e.g., the "Lost Cent Problem").
   * **Strict Tenant Isolation:** Built the Context and Controller logic to enforce that all database queries and mutations require the authenticated `user_id`, guaranteeing cross-tenant data security.
   * **Resilient Data Transformation:** Ensured seamless key conversion (Atoms to Strings) at the Context layer, allowing the API to gracefully handle internal Elixir map structures and external JSON payloads.
   * Exposed a fully secure RESTful JSON API (`GET`, `POST`, `PUT`, `DELETE`) under the `/api/wallets` endpoint.
-
-
+* **Phase 2: Financial Core - Categories:**
+  * Engineered the `Category` entity within the `Finance` context to classify and organize user transactions.
+  * **Smart Budgeting (50/30/20 Rule):** Implemented a `classification` field strictly validated against `essential`, `optional`, and `savings`. This domain-level rule empowers the frontend to generate advanced financial health analytics automatically.
+  * **Data Integrity & Localization:** Enforced strict Ecto validations for category types (`income` or `expense`) and classifications, successfully mapping backend database constraints to localized, user-friendly error messages for the frontend.
+  * **Consistent Tenant Isolation:** Replicated the strict `user_id` scoping to guarantee that users can create, modify, and view exclusively their own custom categories.
+  * Exposed a secure RESTful JSON API (`GET`, `POST`, `PUT`, `DELETE`) under the `/api/categories` endpoint.
+* **Phase 3: Financial Core - Transactions:**
+  * Developed the central `Transaction` entity connecting Users, Wallets, and Categories.
+  * **Pass-Through Expenses (The "Third-Party" Problem):** Engineered an `ignore_in_reports` boolean flag, allowing users to track expenses made on behalf of others (e.g., lending a credit card) without corrupting their personal 50/30/20 financial health charts.
+  * **Double-Entry Ledger Foundation:** Implemented a `transfer_id` field to support atomic, mirrored transactions between wallets (e.g., transferring funds from checking to savings) maintaining perfect zero-sum balances.
+  * **Advanced Cross-Entity Tenant Isolation:** Hardened the Context layer to explicitly verify Wallet ownership prior to transaction insertion, completely neutralizing ID-spoofing attacks across tenants.
+  * **Smart Foreign Key Constraints:** Configured dynamic database constraints: deleting a Wallet cascades to delete its transactions (`delete_all`), while deleting a Category gracefully preserves the financial record (`nilify_all`).
+  * Exposed a secure RESTful JSON API (`GET`, `POST`, `PUT`, `DELETE`) under the `/api/transactions` endpoint.
 
 ---
 
